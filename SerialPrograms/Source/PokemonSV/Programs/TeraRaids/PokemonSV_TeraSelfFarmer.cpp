@@ -32,9 +32,13 @@
 #include "PokemonSV/Programs/PokemonSV_Navigation.h"
 #include "PokemonSV/Programs/TeraRaids/PokemonSV_TeraRoutines.h"
 #include "PokemonSV/Programs/TeraRaids/PokemonSV_TeraBattler.h"
+#include "PokemonSV/Resources/PokemonSV_NameDatabase.h"
+#include "PokemonSV/Resources/PokemonSV_PokemonSprites.h"
+#include "CommonFramework/Logging/Logger.h"
+#include "Pokemon/Resources/Pokemon_PokemonNames.h"
 #include "PokemonSV_TeraSelfFarmer.h"
 
-//#include <iostream>
+#include <iostream>
 //using std::cout;
 //using std::endl;
 
@@ -43,6 +47,144 @@ namespace NintendoSwitch{
 namespace PokemonSV{
 
 using namespace Pokemon;
+
+
+// PokemonSV_TeraNameDatabase.cpp
+StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slugs){
+    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
+
+    StringSelectDatabase database;
+    for (const std::string& slug : slugs){
+        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
+        if (sprite){
+            database.add_entry(StringSelectEntry(
+                slug,
+                slug,
+                sprite->icon
+            ));
+        }else{
+            global_logger_tagged().log("No sprite for: " + slug);
+            database.add_entry(StringSelectEntry(
+                slug,
+                slug
+            ));
+        }
+    }
+
+    return database;
+}
+StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(){
+    // For now, use sprites to determine if it's in the game.
+    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
+
+    std::vector<std::string> slugs;
+    for (std::string& slug : load_pokemon_slug_json_list("PokemonSV/Pokedex.json")){
+        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
+        if (sprite != nullptr){
+            slugs.emplace_back(std::move(slug));
+        }
+    }
+
+    return make_tera_name_database(slugs);
+}
+
+const StringSelectDatabase& ALL_POKEMON_TERA_NAMES(){
+    static const StringSelectDatabase database = make_ALL_POKEMON_TERA_NAMES();
+    return database;
+}
+
+
+
+// PokemonSV_OpponentFilterSelectOption.cpp
+OpponentFilterSelectCell::OpponentFilterSelectCell(
+        const std::string& default_slug
+)
+    : StringSelectCell(
+          ALL_POKEMON_TERA_NAMES(),
+          LockWhileRunning::LOCKED,
+          default_slug
+    )
+{}
+
+
+// PokemonSV_OpponentFilterTable.cpp
+OpponentFilterSelectorRow::OpponentFilterSelectorRow()
+    : opponent("abomasnow-female")
+    , min_stars(LockWhileRunning::LOCKED, 1)
+    , max_stars(LockWhileRunning::LOCKED, 7)
+{
+    PA_ADD_OPTION(opponent);
+    PA_ADD_OPTION(min_stars);
+    PA_ADD_OPTION(max_stars);
+}
+std::unique_ptr<EditableTableRow> OpponentFilterSelectorRow::clone() const{
+    std::unique_ptr<OpponentFilterSelectorRow> ret(new OpponentFilterSelectorRow());
+    ret->opponent.set_by_index(opponent.index());
+    ret->min_stars.set(min_stars);
+    ret->max_stars.set(max_stars);
+    return ret;
+}
+
+
+
+OpponentFilterTable::OpponentFilterTable(std::string label)
+    : EditableTableOption_t<OpponentFilterSelectorRow>(
+          std::move(label),
+          LockWhileRunning::LOCKED,
+          make_defaults()
+    )
+{}
+
+bool OpponentFilterTable::find_opponent(const std::string& pokemon_slug, const size_t stars) const{
+    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
+    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
+        if (row->opponent.slug() == pokemon_slug){
+            std::cout << "Pokemon's a match!" << std::endl;
+            if (! (stars < row->min_stars || stars > row->max_stars)){
+                std::cout << "Stars are a match!" << std::endl;
+                return true;
+            }else{
+                std::cout << "But stars did not match..." << std::endl;
+            }
+        }
+    }
+    return false;
+}
+
+bool OpponentFilterTable::validate_opponent() const{
+    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
+    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
+        if (row->min_stars > row->max_stars)
+            return false;
+    }
+    return true;
+}
+
+std::vector<std::string> OpponentFilterTable::selected_pokemon() const{
+    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
+    std::vector<std::string> slugs;
+    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
+        slugs.emplace_back(row->opponent.slug());
+    }
+    return slugs;
+}
+
+std::vector<std::string> OpponentFilterTable::make_header() const{
+    return std::vector<std::string>{
+        "Pokemon",
+        "Min Stars",
+        "Max Stars",
+    };
+}
+
+std::vector<std::unique_ptr<EditableTableRow>> OpponentFilterTable::make_defaults(){
+    std::vector<std::unique_ptr<EditableTableRow>> ret;
+    ret.emplace_back(std::make_unique<OpponentFilterSelectorRow>());
+    return ret;
+}
+
+
+
 
 
 TeraSelfFarmer_Descriptor::TeraSelfFarmer_Descriptor()
@@ -93,51 +235,35 @@ std::unique_ptr<StatsTracker> TeraSelfFarmer_Descriptor::make_stats() const{
 
 TeraFarmerOpponentFilter::TeraFarmerOpponentFilter()
     : GroupOption("Opponent Filter", LockWhileRunning::UNLOCKED)
-    , SKIP_HERBA(
-        "<b>Skip Non-Herba Raids:</b><br>"
-        "Skip raids that don't have the possibility to reward all types of Herba Mystica. This won't stop the program when Herba Mystica is found, it will only increase your chances to find it.",
-        LockWhileRunning::UNLOCKED,
-        false
-    )
-    , MIN_STARS(
-        "<b>Min Stars:</b><br>Skip raids with less than this many stars.",
-        LockWhileRunning::UNLOCKED,
-        1, 1, 7
-    )
-    , MAX_STARS(
-        "<b>Max Stars:</b><br>Skip raids with more than this many stars to save time since you're likely to lose.",
-        LockWhileRunning::UNLOCKED,
-        4, 1, 7
+    ,
+//      SKIP_HERBA(
+//        "<b>Skip Non-Herba Raids:</b><br>"
+//        "Skip raids that don't have the possibility to reward all types of Herba Mystica. This won't stop the program when Herba Mystica is found, it will only increase your chances to find it.",
+//        LockWhileRunning::UNLOCKED,
+//        false
+//    )
+//    , MIN_STARS(
+//        "<b>Min Stars:</b><br>Skip raids with less than this many stars.",
+//        LockWhileRunning::UNLOCKED,
+//        1, 1, 7
+//    )
+//    , MAX_STARS(
+//        "<b>Max Stars:</b><br>Skip raids with more than this many stars to save time since you're likely to lose.",
+//        LockWhileRunning::UNLOCKED,
+//        4, 1, 7
+//    ),
+      TARGET_POKEMON(
+        "<b>Opponent:</b><br>Multiple Opponents can be selected."
     )
 {
-    PA_ADD_OPTION(SKIP_HERBA);
-    PA_ADD_OPTION(MIN_STARS);
-    PA_ADD_OPTION(MAX_STARS);
+//    PA_ADD_OPTION(SKIP_HERBA);
+//    PA_ADD_OPTION(MIN_STARS);
+//    PA_ADD_OPTION(MAX_STARS);
+    PA_ADD_OPTION(TARGET_POKEMON);
 }
 
 bool TeraFarmerOpponentFilter::should_battle(size_t stars, const std::string& pokemon) const{
-    if (stars < MIN_STARS || stars > MAX_STARS){
-        return false;
-    }
-
-    static const std::set<std::string> fivestar{
-        "gengar", "glalie", "amoonguss", "dondozo", "palafin", "finizen", "blissey", "eelektross", "driftblim", "cetitan"
-    };
-    static const std::set<std::string> sixstar{
-        "blissey", "vaporeon", "amoonguss", "farigiraf", "cetitan", "dondozo"
-    };
-
-    if (SKIP_HERBA){
-        if (fivestar.find(pokemon) != fivestar.end()){
-            return true;
-        }
-        if (sixstar.find(pokemon) != sixstar.end()){
-            return true;
-        }
-        return false;
-    }
-
-    return true;
+    return TARGET_POKEMON.find_opponent(pokemon, stars);
 }
 
 TeraFarmerCatchOnWin::TeraFarmerCatchOnWin(TeraSelfFarmer& program)
@@ -281,12 +407,8 @@ void TeraSelfFarmer::program(SingleSwitchProgramEnvironment& env, BotBaseContext
 
     TeraSelfFarmer_Descriptor::Stats& stats = env.current_stats<TeraSelfFarmer_Descriptor::Stats>();
 
-    if (FILTER.MIN_STARS > FILTER.MAX_STARS){
+    if (! FILTER.TARGET_POKEMON.validate_opponent()){
         throw UserSetupError(env.console, "Error in the settings, \"Min Stars\" is bigger than \"Max Stars\".");
-    }
-    
-    if (FILTER.SKIP_HERBA && FILTER.MAX_STARS < 5){
-        throw UserSetupError(env.console, "Error in the settings, Skip Non-Herba Raids is checked but Max Stars is less than 5.");
     }
 
     m_number_caught = 0;
