@@ -51,13 +51,6 @@ StringSelectDatabase make_ALL_POKEMON_NAMES(){
         }
     }
 
-//    for (std::string& slug : load_pokemon_slug_json_list("PokemonSV/Pokedex.json")){
-//        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
-//        if (sprite != nullptr){
-//            slugs.emplace_back(std::move(slug));
-//        }
-//    }
-
     return make_name_database(slugs);
 }
 

@@ -36,6 +36,7 @@
 #include "PokemonSV/Resources/PokemonSV_PokemonSprites.h"
 #include "CommonFramework/Logging/Logger.h"
 #include "Pokemon/Resources/Pokemon_PokemonNames.h"
+#include "PokemonSV/Resources/PokemonSV_TeraNameDatabase.h"
 #include "PokemonSV_TeraSelfFarmer.h"
 
 #include <iostream>
@@ -50,138 +51,138 @@ using namespace Pokemon;
 
 
 // PokemonSV_TeraNameDatabase.cpp
-StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slugs){
-    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
+//StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slugs){
+//    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
 
-    StringSelectDatabase database;
-    for (const std::string& slug : slugs){
-        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
-        if (sprite){
-            database.add_entry(StringSelectEntry(
-                slug,
-                slug,
-                sprite->icon
-            ));
-        }else{
-            global_logger_tagged().log("No sprite for: " + slug);
-            database.add_entry(StringSelectEntry(
-                slug,
-                slug
-            ));
-        }
-    }
+//    StringSelectDatabase database;
+//    for (const std::string& slug : slugs){
+//        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
+//        if (sprite){
+//            database.add_entry(StringSelectEntry(
+//                slug,
+//                slug,
+//                sprite->icon
+//            ));
+//        }else{
+//            global_logger_tagged().log("No sprite for: " + slug);
+//            database.add_entry(StringSelectEntry(
+//                slug,
+//                slug
+//            ));
+//        }
+//    }
 
-    return database;
-}
-StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(){
-    // For now, use sprites to determine if it's in the game.
-    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
+//    return database;
+//}
+//StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(){
+//    // For now, use sprites to determine if it's in the game.
+//    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
 
-    std::vector<std::string> slugs;
-    for (std::string& slug : load_pokemon_slug_json_list("PokemonSV/Pokedex.json")){
-        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
-        if (sprite != nullptr){
-            slugs.emplace_back(std::move(slug));
-        }
-    }
+//    std::vector<std::string> slugs;
+//    for (std::string& slug : load_pokemon_slug_json_list("PokemonSV/Pokedex.json")){
+//        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
+//        if (sprite != nullptr){
+//            slugs.emplace_back(std::move(slug));
+//        }
+//    }
 
-    return make_tera_name_database(slugs);
-}
+//    return make_tera_name_database(slugs);
+//}
 
-const StringSelectDatabase& ALL_POKEMON_TERA_NAMES(){
-    static const StringSelectDatabase database = make_ALL_POKEMON_TERA_NAMES();
-    return database;
-}
+//const StringSelectDatabase& ALL_POKEMON_TERA_NAMES(){
+//    static const StringSelectDatabase database = make_ALL_POKEMON_TERA_NAMES();
+//    return database;
+//}
 
 
 
 // PokemonSV_OpponentFilterSelectOption.cpp
-OpponentFilterSelectCell::OpponentFilterSelectCell(
-        const std::string& default_slug
-)
-    : StringSelectCell(
-          ALL_POKEMON_TERA_NAMES(),
-          LockWhileRunning::LOCKED,
-          default_slug
-    )
-{}
+//OpponentFilterSelectCell::OpponentFilterSelectCell(
+//        const std::string& default_slug
+//)
+//    : StringSelectCell(
+//          ALL_POKEMON_TERA_NAMES(),
+//          LockWhileRunning::LOCKED,
+//          default_slug
+//    )
+//{}
 
 
 // PokemonSV_OpponentFilterTable.cpp
-OpponentFilterSelectorRow::OpponentFilterSelectorRow()
-    : opponent("abomasnow-female")
-    , min_stars(LockWhileRunning::LOCKED, 1)
-    , max_stars(LockWhileRunning::LOCKED, 7)
-{
-    PA_ADD_OPTION(opponent);
-    PA_ADD_OPTION(min_stars);
-    PA_ADD_OPTION(max_stars);
-}
-std::unique_ptr<EditableTableRow> OpponentFilterSelectorRow::clone() const{
-    std::unique_ptr<OpponentFilterSelectorRow> ret(new OpponentFilterSelectorRow());
-    ret->opponent.set_by_index(opponent.index());
-    ret->min_stars.set(min_stars);
-    ret->max_stars.set(max_stars);
-    return ret;
-}
+//OpponentFilterSelectorRow::OpponentFilterSelectorRow()
+//    : opponent("abomasnow-female")
+//    , min_stars(LockWhileRunning::LOCKED, 1)
+//    , max_stars(LockWhileRunning::LOCKED, 7)
+//{
+//    PA_ADD_OPTION(opponent);
+//    PA_ADD_OPTION(min_stars);
+//    PA_ADD_OPTION(max_stars);
+//}
+//std::unique_ptr<EditableTableRow> OpponentFilterSelectorRow::clone() const{
+//    std::unique_ptr<OpponentFilterSelectorRow> ret(new OpponentFilterSelectorRow());
+//    ret->opponent.set_by_index(opponent.index());
+//    ret->min_stars.set(min_stars);
+//    ret->max_stars.set(max_stars);
+//    return ret;
+//}
 
 
 
-OpponentFilterTable::OpponentFilterTable(std::string label)
-    : EditableTableOption_t<OpponentFilterSelectorRow>(
-          std::move(label),
-          LockWhileRunning::LOCKED,
-          make_defaults()
-    )
-{}
+//OpponentFilterTable::OpponentFilterTable(std::string label)
+//    : EditableTableOption_t<OpponentFilterSelectorRow>(
+//          std::move(label),
+//          LockWhileRunning::LOCKED,
+//          make_defaults()
+//    )
+//{}
 
-bool OpponentFilterTable::find_opponent(const std::string& pokemon_slug, const size_t stars) const{
-    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
-    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
-        if (row->opponent.slug() == pokemon_slug){
-            std::cout << "Pokemon's a match!" << std::endl;
-            if (! (stars < row->min_stars || stars > row->max_stars)){
-                std::cout << "Stars are a match!" << std::endl;
-                return true;
-            }else{
-                std::cout << "But stars did not match..." << std::endl;
-            }
-        }
-    }
-    return false;
-}
+//bool OpponentFilterTable::find_opponent(const std::string& pokemon_slug, const size_t stars) const{
+//    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
+//    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
+//        if (row->opponent.slug() == pokemon_slug){
+//            std::cout << "Pokemon's a match!" << std::endl;
+//            if (! (stars < row->min_stars || stars > row->max_stars)){
+//                std::cout << "Stars are a match!" << std::endl;
+//                return true;
+//            }else{
+//                std::cout << "But stars did not match..." << std::endl;
+//            }
+//        }
+//    }
+//    return false;
+//}
 
-bool OpponentFilterTable::validate_opponent() const{
-    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
-    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
-        if (row->min_stars > row->max_stars)
-            return false;
-    }
-    return true;
-}
+//bool OpponentFilterTable::validate_opponent() const{
+//    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
+//    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
+//        if (row->min_stars > row->max_stars)
+//            return false;
+//    }
+//    return true;
+//}
 
-std::vector<std::string> OpponentFilterTable::selected_pokemon() const{
-    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
-    std::vector<std::string> slugs;
-    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
-        slugs.emplace_back(row->opponent.slug());
-    }
-    return slugs;
-}
+//std::vector<std::string> OpponentFilterTable::selected_pokemon() const{
+//    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
+//    std::vector<std::string> slugs;
+//    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
+//        slugs.emplace_back(row->opponent.slug());
+//    }
+//    return slugs;
+//}
 
-std::vector<std::string> OpponentFilterTable::make_header() const{
-    return std::vector<std::string>{
-        "Pokemon",
-        "Min Stars",
-        "Max Stars",
-    };
-}
+//std::vector<std::string> OpponentFilterTable::make_header() const{
+//    return std::vector<std::string>{
+//        "Pokemon",
+//        "Min Stars",
+//        "Max Stars",
+//    };
+//}
 
-std::vector<std::unique_ptr<EditableTableRow>> OpponentFilterTable::make_defaults(){
-    std::vector<std::unique_ptr<EditableTableRow>> ret;
-    ret.emplace_back(std::make_unique<OpponentFilterSelectorRow>());
-    return ret;
-}
+//std::vector<std::unique_ptr<EditableTableRow>> OpponentFilterTable::make_defaults(){
+//    std::vector<std::unique_ptr<EditableTableRow>> ret;
+//    ret.emplace_back(std::make_unique<OpponentFilterSelectorRow>());
+//    return ret;
+//}
 
 
 

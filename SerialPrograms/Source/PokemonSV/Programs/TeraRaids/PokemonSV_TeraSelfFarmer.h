@@ -19,52 +19,54 @@
 #include "Common/Cpp/Options/EnumDropdownOption.h"
 #include "Common/Cpp/Options/EditableTableOption.h"
 #include "CommonFramework/Options/StringSelectOption.h"
+#include "PokemonSV/Options/PokemonSV_TeraOpponentTable.h"
 
 namespace PokemonAutomation{
     struct VideoSnapshot;
 namespace NintendoSwitch{
 namespace PokemonSV{
 
-StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slugs);
+// opponent filter option
+//StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slugs);
 
-const StringSelectDatabase& ALL_POKEMON_TERA_NAMES();
-
-
-
-class OpponentFilterSelectCell : public StringSelectCell{
-public:
-    OpponentFilterSelectCell(const std::string& default_slug);
-};
+//const StringSelectDatabase& ALL_POKEMON_TERA_NAMES();
 
 
 
-class OpponentFilterSelectorRow : public EditableTableRow{
-public:
-    OpponentFilterSelectorRow();
-    virtual std::unique_ptr<EditableTableRow> clone() const override;
+//class OpponentFilterSelectCell : public StringSelectCell{
+//public:
+//    OpponentFilterSelectCell(const std::string& default_slug);
+//};
 
-public:
-    OpponentFilterSelectCell opponent;
-    SimpleIntegerCell<size_t> min_stars;
-    SimpleIntegerCell<size_t> max_stars;
-};
 
-class OpponentFilterTable : public EditableTableOption_t<OpponentFilterSelectorRow>{
-public:
-    OpponentFilterTable(std::string label);
 
-    // Whether pokemon_slug is among the selected pokemon
-    bool find_opponent(const std::string& pokemon_slug, const size_t stars) const;
-    // Return the pokemon slugs that the user has selected via the opponent filter table UI.
-    std::vector<std::string> selected_pokemon() const;
+//class OpponentFilterSelectorRow : public EditableTableRow{
+//public:
+//    OpponentFilterSelectorRow();
+//    virtual std::unique_ptr<EditableTableRow> clone() const override;
 
-    // Check if stars match up
-    bool validate_opponent() const;
+//public:
+//    OpponentFilterSelectCell opponent;
+//    SimpleIntegerCell<size_t> min_stars;
+//    SimpleIntegerCell<size_t> max_stars;
+//};
 
-    virtual std::vector<std::string> make_header() const override;
+//class OpponentFilterTable : public EditableTableOption_t<OpponentFilterSelectorRow>{
+//public:
+//    OpponentFilterTable(std::string label);
 
-    static std::vector<std::unique_ptr<EditableTableRow>> make_defaults();
-};
+//    // Whether pokemon_slug is among the selected pokemon
+//    bool find_opponent(const std::string& pokemon_slug, const size_t stars) const;
+//    // Return the pokemon slugs that the user has selected via the opponent filter table UI.
+//    std::vector<std::string> selected_pokemon() const;
+
+//    // Check if stars match up
+//    bool validate_opponent() const;
+
+//    virtual std::vector<std::string> make_header() const override;
+
+//    static std::vector<std::unique_ptr<EditableTableRow>> make_defaults();
+//};
 
 
 
@@ -92,7 +94,7 @@ public:
 //    BooleanCheckBoxOption SKIP_HERBA;
 //    SimpleIntegerOption<uint8_t> MIN_STARS;
 //    SimpleIntegerOption<uint8_t> MAX_STARS;
-    OpponentFilterTable TARGET_POKEMON;
+    TeraOpponentTable TARGET_POKEMON;
 
 private:
 
