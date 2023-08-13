@@ -1,4 +1,4 @@
-/*  Tera Exit Routines
+﻿/*  Tera Exit Routines
  *
  *  From: https://github.com/PokemonAutomation/Arduino-Source
  *
@@ -16,6 +16,8 @@
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 #include "Pokemon/Pokemon_Strings.h"
 #include "Pokemon/Pokemon_Notification.h"
+#include "PokemonSV/Inference/Boxes/PokemonSV_BoxShinyDetector.h"
+#include "PokemonSV/Inference/Boxes/PokemonSV_IVCheckerReader.h"
 #include "PokemonSV/Inference/Dialogs/PokemonSV_DialogDetector.h"
 //#include "PokemonSV/Inference/PokemonSV_GradientArrowDetector.h"
 #include "PokemonSV/Inference/Battles/PokemonSV_TeraBattleMenus.h"
@@ -28,7 +30,11 @@
 #include "PokemonSV/Inference/Tera/PokemonSV_TeraRewardsReader.h"
 #include "PokemonSV/Programs/PokemonSV_ConnectToInternet.h"
 #include "PokemonSV/Programs/PokemonSV_BasicCatcher.h"
+#include "PokemonSV/Programs/PokemonSV_Navigation.h"
+#include "PokemonSV/Programs/Boxes/PokemonSV_BoxRoutines.h"
 #include "PokemonSV_TeraRoutines.h"
+
+#include <iostream>
 
 namespace PokemonAutomation{
 namespace NintendoSwitch{
@@ -605,7 +611,146 @@ TeraResult exit_tera_win_by_catching(
 }
 
 
+void finish_raid_win_by_catching(
+    ProgramEnvironment& env,
+    ConsoleHandle& console, BotBaseContext& context,
+    Language language,
+    const std::string& ball_slug,
+    size_t stop_on_sparkly_items
+){
+    console.log("Finishing raid with catching...");
 
+    WallClock start = current_time();
+    while (true){
+        context.wait_for_all_requests();
+        if (current_time() - start > std::chrono::minutes(5)){
+            dump_image_and_throw_recoverable_exception(
+                env.program_info(), console, "ExitTeraWinFailed",
+                "Failed to return to overworld after 5 minutes."
+            );
+        }
+
+        TeraCatchWatcher catch_menu(COLOR_BLUE);
+        WhiteButtonWatcher next_button(
+            COLOR_CYAN,
+            WhiteButton::ButtonA,
+            {0.8, 0.93, 0.2, 0.07},
+            WhiteButtonWatcher::FinderType::PRESENT,
+            std::chrono::seconds(1)
+        );
+        AdvanceDialogWatcher dialog(COLOR_YELLOW);
+        OverworldWatcher overworld(COLOR_RED);
+        int ret = wait_until(
+            console, context,
+            std::chrono::seconds(60),
+            {
+                catch_menu,
+                next_button,
+                dialog,
+                overworld
+            }
+        );
+        context.wait_for(std::chrono::milliseconds(100));
+        switch (ret){
+        case 0:{
+            console.log("Detected catch prompt.");
+
+            pbf_press_button(context, BUTTON_A, 20, 150);
+            context.wait_for_all_requests();
+
+            BattleBallReader reader(console, language);
+            int quantity = move_to_ball(reader, console, context, ball_slug);
+            if (quantity == 0){
+                throw FatalProgramException(
+                    ErrorReport::NO_ERROR_REPORT, console,
+                    "Unable to find appropriate ball. Did you run out?",
+                    true
+                );
+            }
+            if (quantity < 0){
+                console.log("Unable to read ball quantity.", COLOR_RED);
+            }
+            pbf_mash_button(context, BUTTON_A, 125);
+
+            continue;
+        }
+        case 1:
+            console.log("Detected possible (A) Next button.");
+            stop_if_enough_rare_items(console, context, stop_on_sparkly_items);
+            pbf_press_button(context, BUTTON_A, 20, 105);
+            continue;
+        case 2:
+            console.log("Detected dialog.");
+            pbf_press_button(context, BUTTON_B, 20, 105);
+            break;
+        case 3:
+            console.log("Detected overworld.");
+            return;
+        default:
+            dump_image_and_throw_recoverable_exception(
+                env.program_info(), console, "ExitTeraWinFailed",
+                "exit_tera_win_without_catching(): No recognized state after 60 seconds."
+            );
+        }
+    }
+}
+
+bool check_caught_pokemon_info(
+    ProgramEnvironment &env,
+    ConsoleHandle &console, BotBaseContext &context,
+    Language language,
+    TeraIVFilterTable &FILTERS,
+    const std::string &pokemon_slug,
+    TeraIVAction &action
+){
+    // Check pokemon's info
+    context.wait_for_all_requests();
+
+    if (language == Language::None){
+        change_view_to_stats_or_judge(console, context);
+    }else{
+        change_view_to_judge(console, context, language);
+    }
+
+    VideoOverlaySet overlay_set(console.overlay());
+
+    BoxShinyWatcher shiny_detector;
+    shiny_detector.make_overlays(overlay_set);
+
+    IVCheckerReaderScope iv_reader_scope(console.overlay(), language);
+
+    const int shiny_ret = wait_until(console, context, std::chrono::milliseconds(200), {shiny_detector});
+    const bool shiny = (shiny_ret == 0);
+    VideoSnapshot screen = console.video().snapshot();
+
+    IVCheckerReader::Results IVs = iv_reader_scope.read(console.logger(), screen);
+
+    console.log(IVs.to_string(), COLOR_GREEN);
+
+    action = FILTERS.get_action(pokemon_slug, shiny, IVs);
+
+    switch (action){
+    case TeraIVAction::Keep:
+        console.log("Action returned as KEEP", COLOR_RED);
+        break;
+    case TeraIVAction::Release:
+        console.log("Action returned as RELEASE", COLOR_RED);
+        break;
+    case TeraIVAction::StopProgram:
+        console.log("Action returned as STOP", COLOR_RED);
+        break;
+    default:
+        console.log("INVALID ACTION", COLOR_RED);
+    }
+
+    return shiny;
+
+    // Move pokemon to keep box if it's a keeper
+
+    // Release pokemon if it's a releaser
+
+    // Go back to overworld
+}
 
 TeraResult run_tera_summary(
     ProgramEnvironment& env,

@@ -3,6 +3,7 @@
 
 #include "Common/Cpp/Options/SimpleIntegerOption.h"
 #include "Common/Cpp/Options/EditableTableOption.h"
+#include "Common/Cpp/Options/BooleanCheckBoxOption.h"
 #include "PokemonSV_PokemonSelectOption.h"
 
 namespace PokemonAutomation {

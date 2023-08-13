@@ -7,7 +7,7 @@ namespace NintendoSwitch {
 namespace PokemonSV {
 
 TeraOpponentRow::TeraOpponentRow()
-    : opponent("abomasnow-female")
+    : opponent("anything", true)
     , min_stars(LockWhileRunning::LOCKED, 1)
     , max_stars(LockWhileRunning::LOCKED, 7)
 {
@@ -36,7 +36,7 @@ TeraOpponentTable::TeraOpponentTable(std::string label)
 bool TeraOpponentTable::find_opponent(const std::string& pokemon_slug, const size_t stars) const{
     std::vector<std::unique_ptr<TeraOpponentRow>> table = copy_snapshot();
     for (const std::unique_ptr<TeraOpponentRow>& row : table){
-        if (row->opponent.slug() == pokemon_slug){
+        if (row->opponent.slug() == pokemon_slug || row->opponent.slug() == "anything"){
             std::cout << "Pokemon's a match!" << std::endl;
             if (! (stars < row->min_stars || stars > row->max_stars)){
                 std::cout << "Stars are a match!" << std::endl;

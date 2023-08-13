@@ -33,7 +33,7 @@ StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slu
 
     return database;
 }
-StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(){
+StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(bool with_anything = false){
     // For now, use sprites to determine if it's in the game.
     const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
 
@@ -45,11 +45,19 @@ StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(){
         }
     }
 
+    if (with_anything)
+        slugs.emplace(slugs.begin(), "anything");
+
     return make_tera_name_database(slugs);
 }
 
 const StringSelectDatabase& ALL_POKEMON_TERA_NAMES(){
     static const StringSelectDatabase database = make_ALL_POKEMON_TERA_NAMES();
+    return database;
+}
+
+const StringSelectDatabase& ALL_POKEMON_TERA_NAMES_WITH_ANYTHING(){
+    static const StringSelectDatabase database = make_ALL_POKEMON_TERA_NAMES(true);
     return database;
 }
 

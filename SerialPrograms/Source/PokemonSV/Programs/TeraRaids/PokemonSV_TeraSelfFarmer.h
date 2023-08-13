@@ -20,55 +20,13 @@
 #include "Common/Cpp/Options/EditableTableOption.h"
 #include "CommonFramework/Options/StringSelectOption.h"
 #include "PokemonSV/Options/PokemonSV_TeraOpponentTable.h"
+#include "PokemonSV/Options/PokemonSV_TeraIVFilterTable.h"
+#include "PokemonSV/Options/PokemonSV_TeraMoveTypeTable.h"
 
 namespace PokemonAutomation{
     struct VideoSnapshot;
 namespace NintendoSwitch{
 namespace PokemonSV{
-
-// opponent filter option
-//StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slugs);
-
-//const StringSelectDatabase& ALL_POKEMON_TERA_NAMES();
-
-
-
-//class OpponentFilterSelectCell : public StringSelectCell{
-//public:
-//    OpponentFilterSelectCell(const std::string& default_slug);
-//};
-
-
-
-//class OpponentFilterSelectorRow : public EditableTableRow{
-//public:
-//    OpponentFilterSelectorRow();
-//    virtual std::unique_ptr<EditableTableRow> clone() const override;
-
-//public:
-//    OpponentFilterSelectCell opponent;
-//    SimpleIntegerCell<size_t> min_stars;
-//    SimpleIntegerCell<size_t> max_stars;
-//};
-
-//class OpponentFilterTable : public EditableTableOption_t<OpponentFilterSelectorRow>{
-//public:
-//    OpponentFilterTable(std::string label);
-
-//    // Whether pokemon_slug is among the selected pokemon
-//    bool find_opponent(const std::string& pokemon_slug, const size_t stars) const;
-//    // Return the pokemon slugs that the user has selected via the opponent filter table UI.
-//    std::vector<std::string> selected_pokemon() const;
-
-//    // Check if stars match up
-//    bool validate_opponent() const;
-
-//    virtual std::vector<std::string> make_header() const override;
-
-//    static std::vector<std::unique_ptr<EditableTableRow>> make_defaults();
-//};
-
-
 
 class TeraSelfFarmer;
 
@@ -91,9 +49,6 @@ public:
 
     bool should_battle(size_t stars, const std::string& pokemon) const;
 
-//    BooleanCheckBoxOption SKIP_HERBA;
-//    SimpleIntegerOption<uint8_t> MIN_STARS;
-//    SimpleIntegerOption<uint8_t> MAX_STARS;
     TeraOpponentTable TARGET_POKEMON;
 
 private:
@@ -115,9 +70,10 @@ class TeraFarmerStopConditions : public GroupOption{
 public:
     TeraFarmerStopConditions();
 
-    SimpleIntegerOption<uint16_t> MAX_CATCHES;
-    BooleanCheckBoxOption STOP_ON_SHINY;
+    BooleanCheckBoxOption HAS_CLONE_RIDE_POKEMON;
+//    BooleanCheckBoxOption STOP_ON_SHINY;
     SimpleIntegerOption<uint8_t> STOP_ON_RARE_ITEMS;
+    TeraIVFilterTable IV_FILTER;
 };
 
 
@@ -128,7 +84,9 @@ public:
     virtual void program(SingleSwitchProgramEnvironment& env, BotBaseContext& context) override;
 
 private:
-    bool run_raid(SingleSwitchProgramEnvironment& env, BotBaseContext& context);
+    bool run_raid(SingleSwitchProgramEnvironment& env, BotBaseContext& context, const std::string& pokemon_slug, const std::string& type_slug);
+    void process_caught_pokemon(SingleSwitchProgramEnvironment& env, BotBaseContext& context, const std::string& pokemon_slug);
+    bool move_pokemon_to_keep(SingleSwitchProgramEnvironment& env, BotBaseContext& context, uint8_t pokemon_row_in_party);
 
 private:
     friend class TeraFarmerCatchOnWin;
@@ -136,13 +94,17 @@ private:
     OCR::LanguageOCROption LANGUAGE;
 
     TeraFarmerOpponentFilter FILTER;
-    TeraAIOption BATTLE_AI;
+    TeraAIOption BATTLE_AI; 
+    TeraAIOption ALT_BATTLE_AI;
+    TeraMoveTypeTable ALT_AI_TABLE;
+
     TeraFarmerCatchOnWin CATCH_ON_WIN;
     TeraFarmerStopConditions STOP_CONDITIONS;
 
     //  Notifications
     EventNotificationOption NOTIFICATION_STATUS_UPDATE;
     EventNotificationOption NOTIFICATION_NONSHINY;
+    EventNotificationOption NOTIFICATION_NONSHINY_KEEP;
     EventNotificationOption NOTIFICATION_SHINY;
     EventNotificationsOption NOTIFICATIONS;
 

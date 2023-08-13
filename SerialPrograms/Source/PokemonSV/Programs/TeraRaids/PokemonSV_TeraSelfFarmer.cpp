@@ -8,6 +8,7 @@
 #include <sstream>
 #include "Common/Compiler.h"
 #include "Common/Cpp/Exceptions.h"
+#include "CommonFramework/Exceptions/ProgramFinishedException.h"
 #include "CommonFramework/GlobalSettingsPanel.h"
 #include "CommonFramework/Notifications/ProgramNotifications.h"
 #include "CommonFramework/VideoPipeline/VideoFeed.h"
@@ -20,7 +21,7 @@
 #include "NintendoSwitch/Commands/NintendoSwitch_Commands_PushButtons.h"
 #include "NintendoSwitch/Programs/NintendoSwitch_GameEntry.h"
 #include "Pokemon/Pokemon_Strings.h"
-//#include "Pokemon/Pokemon_Notification.h"
+#include "Pokemon/Pokemon_Notification.h"
 #include "Pokemon/Inference/Pokemon_NameReader.h"
 #include "PokemonSwSh/Commands/PokemonSwSh_Commands_DateSpam.h"
 #include "PokemonSV/PokemonSV_Settings.h"
@@ -37,6 +38,8 @@
 #include "CommonFramework/Logging/Logger.h"
 #include "Pokemon/Resources/Pokemon_PokemonNames.h"
 #include "PokemonSV/Resources/PokemonSV_TeraNameDatabase.h"
+#include "PokemonSV/Inference/Boxes/PokemonSV_BoxDetection.h"
+#include "PokemonSV/Programs/Boxes/PokemonSV_BoxRoutines.h"
 #include "PokemonSV_TeraSelfFarmer.h"
 
 #include <iostream>
@@ -48,145 +51,6 @@ namespace NintendoSwitch{
 namespace PokemonSV{
 
 using namespace Pokemon;
-
-
-// PokemonSV_TeraNameDatabase.cpp
-//StringSelectDatabase make_tera_name_database(const std::vector<std::string>& slugs){
-//    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
-
-//    StringSelectDatabase database;
-//    for (const std::string& slug : slugs){
-//        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
-//        if (sprite){
-//            database.add_entry(StringSelectEntry(
-//                slug,
-//                slug,
-//                sprite->icon
-//            ));
-//        }else{
-//            global_logger_tagged().log("No sprite for: " + slug);
-//            database.add_entry(StringSelectEntry(
-//                slug,
-//                slug
-//            ));
-//        }
-//    }
-
-//    return database;
-//}
-//StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(){
-//    // For now, use sprites to determine if it's in the game.
-//    const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
-
-//    std::vector<std::string> slugs;
-//    for (std::string& slug : load_pokemon_slug_json_list("PokemonSV/Pokedex.json")){
-//        const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
-//        if (sprite != nullptr){
-//            slugs.emplace_back(std::move(slug));
-//        }
-//    }
-
-//    return make_tera_name_database(slugs);
-//}
-
-//const StringSelectDatabase& ALL_POKEMON_TERA_NAMES(){
-//    static const StringSelectDatabase database = make_ALL_POKEMON_TERA_NAMES();
-//    return database;
-//}
-
-
-
-// PokemonSV_OpponentFilterSelectOption.cpp
-//OpponentFilterSelectCell::OpponentFilterSelectCell(
-//        const std::string& default_slug
-//)
-//    : StringSelectCell(
-//          ALL_POKEMON_TERA_NAMES(),
-//          LockWhileRunning::LOCKED,
-//          default_slug
-//    )
-//{}
-
-
-// PokemonSV_OpponentFilterTable.cpp
-//OpponentFilterSelectorRow::OpponentFilterSelectorRow()
-//    : opponent("abomasnow-female")
-//    , min_stars(LockWhileRunning::LOCKED, 1)
-//    , max_stars(LockWhileRunning::LOCKED, 7)
-//{
-//    PA_ADD_OPTION(opponent);
-//    PA_ADD_OPTION(min_stars);
-//    PA_ADD_OPTION(max_stars);
-//}
-//std::unique_ptr<EditableTableRow> OpponentFilterSelectorRow::clone() const{
-//    std::unique_ptr<OpponentFilterSelectorRow> ret(new OpponentFilterSelectorRow());
-//    ret->opponent.set_by_index(opponent.index());
-//    ret->min_stars.set(min_stars);
-//    ret->max_stars.set(max_stars);
-//    return ret;
-//}
-
-
-
-//OpponentFilterTable::OpponentFilterTable(std::string label)
-//    : EditableTableOption_t<OpponentFilterSelectorRow>(
-//          std::move(label),
-//          LockWhileRunning::LOCKED,
-//          make_defaults()
-//    )
-//{}
-
-//bool OpponentFilterTable::find_opponent(const std::string& pokemon_slug, const size_t stars) const{
-//    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
-//    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
-//        if (row->opponent.slug() == pokemon_slug){
-//            std::cout << "Pokemon's a match!" << std::endl;
-//            if (! (stars < row->min_stars || stars > row->max_stars)){
-//                std::cout << "Stars are a match!" << std::endl;
-//                return true;
-//            }else{
-//                std::cout << "But stars did not match..." << std::endl;
-//            }
-//        }
-//    }
-//    return false;
-//}
-
-//bool OpponentFilterTable::validate_opponent() const{
-//    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
-//    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
-//        if (row->min_stars > row->max_stars)
-//            return false;
-//    }
-//    return true;
-//}
-
-//std::vector<std::string> OpponentFilterTable::selected_pokemon() const{
-//    std::vector<std::unique_ptr<OpponentFilterSelectorRow>> table = copy_snapshot();
-//    std::vector<std::string> slugs;
-//    for (const std::unique_ptr<OpponentFilterSelectorRow>& row : table){
-//        slugs.emplace_back(row->opponent.slug());
-//    }
-//    return slugs;
-//}
-
-//std::vector<std::string> OpponentFilterTable::make_header() const{
-//    return std::vector<std::string>{
-//        "Pokemon",
-//        "Min Stars",
-//        "Max Stars",
-//    };
-//}
-
-//std::vector<std::unique_ptr<EditableTableRow>> OpponentFilterTable::make_defaults(){
-//    std::vector<std::unique_ptr<EditableTableRow>> ret;
-//    ret.emplace_back(std::make_unique<OpponentFilterSelectorRow>());
-//    return ret;
-//}
-
-
-
-
 
 TeraSelfFarmer_Descriptor::TeraSelfFarmer_Descriptor()
     : SingleSwitchProgramDescriptor(
@@ -208,6 +72,7 @@ struct TeraSelfFarmer_Descriptor::Stats : public StatsTracker{
         , m_skipped(m_stats["Skipped"])
         , m_errors(m_stats["Errors"])
         , m_caught(m_stats["Caught"])
+        , m_kept(m_stats["Kept"])
         , m_shinies(m_stats["Shinies"])
     {
         m_display_order.emplace_back("Date Skips");
@@ -217,6 +82,7 @@ struct TeraSelfFarmer_Descriptor::Stats : public StatsTracker{
         m_display_order.emplace_back("Skipped");
         m_display_order.emplace_back("Errors", true);
         m_display_order.emplace_back("Caught", true);
+        m_display_order.emplace_back("Kept", true);
         m_display_order.emplace_back("Shinies", true);
     }
     std::atomic<uint64_t>& m_skips;
@@ -226,6 +92,7 @@ struct TeraSelfFarmer_Descriptor::Stats : public StatsTracker{
     std::atomic<uint64_t>& m_skipped;
     std::atomic<uint64_t>& m_errors;
     std::atomic<uint64_t>& m_caught;
+    std::atomic<uint64_t>& m_kept;
     std::atomic<uint64_t>& m_shinies;
 };
 std::unique_ptr<StatsTracker> TeraSelfFarmer_Descriptor::make_stats() const{
@@ -236,30 +103,10 @@ std::unique_ptr<StatsTracker> TeraSelfFarmer_Descriptor::make_stats() const{
 
 TeraFarmerOpponentFilter::TeraFarmerOpponentFilter()
     : GroupOption("Opponent Filter", LockWhileRunning::UNLOCKED)
-    ,
-//      SKIP_HERBA(
-//        "<b>Skip Non-Herba Raids:</b><br>"
-//        "Skip raids that don't have the possibility to reward all types of Herba Mystica. This won't stop the program when Herba Mystica is found, it will only increase your chances to find it.",
-//        LockWhileRunning::UNLOCKED,
-//        false
-//    )
-//    , MIN_STARS(
-//        "<b>Min Stars:</b><br>Skip raids with less than this many stars.",
-//        LockWhileRunning::UNLOCKED,
-//        1, 1, 7
-//    )
-//    , MAX_STARS(
-//        "<b>Max Stars:</b><br>Skip raids with more than this many stars to save time since you're likely to lose.",
-//        LockWhileRunning::UNLOCKED,
-//        4, 1, 7
-//    ),
-      TARGET_POKEMON(
+    , TARGET_POKEMON(
         "<b>Opponent:</b><br>Multiple Opponents can be selected."
     )
 {
-//    PA_ADD_OPTION(SKIP_HERBA);
-//    PA_ADD_OPTION(MIN_STARS);
-//    PA_ADD_OPTION(MAX_STARS);
     PA_ADD_OPTION(TARGET_POKEMON);
 }
 
@@ -284,23 +131,19 @@ TeraFarmerCatchOnWin::TeraFarmerCatchOnWin(TeraSelfFarmer& program)
     PA_ADD_OPTION(FIX_TIME_ON_CATCH);
 }
 void TeraFarmerCatchOnWin::on_set_enabled(bool enabled){
-    m_program.STOP_CONDITIONS.STOP_ON_SHINY.set_visibility(
+    m_program.STOP_CONDITIONS.IV_FILTER.set_visibility(
         enabled ? ConfigOptionState::ENABLED : ConfigOptionState::DISABLED
     );
 }
 
 TeraFarmerStopConditions::TeraFarmerStopConditions()
     : GroupOption("Stop Conditions", LockWhileRunning::UNLOCKED)
-    , MAX_CATCHES(
-        "<b>Max Catches:</b><br>Stop program after catching this many " + STRING_POKEMON + ".",
-        LockWhileRunning::UNLOCKED,
-        50, 1, 999
-    )
-    , STOP_ON_SHINY(
-        "<b>Stop on Shiny:</b> (requires catching the " + STRING_POKEMON + ")<br>"
-        "Stop the program if a shiny is found. Resetting the game will return you to the front of this (shiny) raid so it can be hosted again.",
-        LockWhileRunning::UNLOCKED,
-        true
+    , HAS_CLONE_RIDE_POKEMON(
+          "<b>Cloned Ride Legendary 2nd in Party:</b><br>"
+          "Ride legendary cannot be cloned after patch 1.0.1. To preserve the existing clone while hatching eggs, "
+          "place it as second in party before starting the program.",
+          LockWhileRunning::LOCKED,
+          false
     )
     , STOP_ON_RARE_ITEMS(
         "<b>Stop on Rare Items:</b><br>"
@@ -310,9 +153,9 @@ TeraFarmerStopConditions::TeraFarmerStopConditions()
         0, 0, 8
     )
 {
-    PA_ADD_OPTION(MAX_CATCHES);
-    PA_ADD_OPTION(STOP_ON_SHINY);
+    PA_ADD_OPTION(HAS_CLONE_RIDE_POKEMON);
     PA_ADD_OPTION(STOP_ON_RARE_ITEMS);
+    PA_ADD_OPTION(IV_FILTER);
 }
 
 
@@ -330,6 +173,11 @@ TeraSelfFarmer::TeraSelfFarmer()
         {"Notifs"},
         std::chrono::seconds(3600)
     )
+    , NOTIFICATION_NONSHINY_KEEP(
+        "Non-Shiny Keep",
+        true, true, ImageAttachmentMode::JPG,
+        {"Notifs"}
+    )
     , NOTIFICATION_SHINY(
         "Shiny Encounter",
         true, true, ImageAttachmentMode::JPG,
@@ -338,6 +186,7 @@ TeraSelfFarmer::TeraSelfFarmer()
     , NOTIFICATIONS({
         &NOTIFICATION_STATUS_UPDATE,
         &NOTIFICATION_NONSHINY,
+        &NOTIFICATION_NONSHINY_KEEP,
         &NOTIFICATION_SHINY,
         &NOTIFICATION_PROGRAM_FINISH,
         &NOTIFICATION_ERROR_RECOVERABLE,
@@ -347,6 +196,8 @@ TeraSelfFarmer::TeraSelfFarmer()
     PA_ADD_OPTION(LANGUAGE);
     PA_ADD_OPTION(FILTER);
     PA_ADD_OPTION(BATTLE_AI);
+    PA_ADD_OPTION(ALT_BATTLE_AI);
+    PA_ADD_OPTION(ALT_AI_TABLE);
     PA_ADD_OPTION(CATCH_ON_WIN);
     PA_ADD_OPTION(STOP_CONDITIONS);
     PA_ADD_OPTION(NOTIFICATIONS);
@@ -354,12 +205,17 @@ TeraSelfFarmer::TeraSelfFarmer()
 
 
 
-bool TeraSelfFarmer::run_raid(SingleSwitchProgramEnvironment& env, BotBaseContext& context){
+bool TeraSelfFarmer::run_raid(SingleSwitchProgramEnvironment& env, BotBaseContext& context, const std::string& pokemon_slug, const std::string& type_slug){
     env.console.log("Running raid...");
 
     TeraSelfFarmer_Descriptor::Stats& stats = env.current_stats<TeraSelfFarmer_Descriptor::Stats>();
 
-    bool win = run_tera_battle(env, env.console, context, BATTLE_AI);
+    // Check which battle ai to use
+    bool win;
+    if (ALT_AI_TABLE.check_type(type_slug))
+        win = run_tera_battle(env, env.console, context, ALT_BATTLE_AI);
+    else
+        win = run_tera_battle(env, env.console, context, BATTLE_AI);
 
     if (win){
         stats.m_wins++;
@@ -389,17 +245,126 @@ bool TeraSelfFarmer::run_raid(SingleSwitchProgramEnvironment& env, BotBaseContex
     m_number_caught++;
     stats.m_caught++;
 
-    exit_tera_win_by_catching(
+//    exit_tera_win_by_catching(
+//        env, env.console, context,
+//        LANGUAGE,
+//        CATCH_ON_WIN.BALL_SELECT.slug(),
+//        NOTIFICATION_NONSHINY,
+//        NOTIFICATION_SHINY,
+//        STOP_CONDITIONS.STOP_ON_SHINY,
+//        STOP_CONDITIONS.STOP_ON_RARE_ITEMS,
+//        &stats.m_shinies
+//    );
+
+    finish_raid_win_by_catching(
         env, env.console, context,
         LANGUAGE,
         CATCH_ON_WIN.BALL_SELECT.slug(),
-        NOTIFICATION_NONSHINY,
-        NOTIFICATION_SHINY,
-        STOP_CONDITIONS.STOP_ON_SHINY,
-        STOP_CONDITIONS.STOP_ON_RARE_ITEMS,
-        &stats.m_shinies
+        STOP_CONDITIONS.STOP_ON_RARE_ITEMS
     );
+
+    enter_box_system_from_overworld(env.program_info(), env.console, context);
+
+    // Now we are now in boxes and need to process the pokemon
+    process_caught_pokemon(env, context, pokemon_slug);
+    context.wait_for_all_requests();
+    leave_box_system_to_overworld(env.program_info(), env.console, context);
+
     return true;
+}
+
+void TeraSelfFarmer::process_caught_pokemon(SingleSwitchProgramEnvironment& env, BotBaseContext& context, const std::string& pokemon_slug){
+    auto& stats = env.current_stats<TeraSelfFarmer_Descriptor::Stats>();
+
+    const int party_row = STOP_CONDITIONS.HAS_CLONE_RIDE_POKEMON ? 2 : 1;
+    context.wait_for_all_requests();
+    move_box_cursor(env.program_info(), env.console, context, BoxCursorLocation::PARTY, party_row, 0);
+
+    env.log("Checking caught pokemon...");
+
+    bool found_shiny = false;
+    TeraIVAction action = TeraIVAction::Release;
+    if (check_caught_pokemon_info(env, env.console, context, LANGUAGE, STOP_CONDITIONS.IV_FILTER, pokemon_slug, action)){
+        found_shiny = true;
+        env.console.log("Shiny found!");
+        env.console.overlay().add_log("Shiny " + pokemon_slug + " caught!", COLOR_GREEN);
+        stats.m_shinies++;
+        env.update_stats();
+        send_encounter_notification(
+            env,
+            NOTIFICATION_NONSHINY,
+            NOTIFICATION_SHINY,
+            false, true,
+            {{{}, ShinyType::UNKNOWN_SHINY}},
+            std::nan(""),
+            env.console.video().snapshot()
+        );
+    }else{
+        env.console.overlay().add_log(pokemon_slug + " not shiny...", COLOR_RED);
+    }
+
+    auto send_keep_notification = [&](){
+        if (!found_shiny){
+            send_encounter_notification(
+                env,
+                NOTIFICATION_NONSHINY_KEEP,
+                NOTIFICATION_SHINY,
+                false, false, {}, std::nan(""),
+                env.console.video().snapshot()
+            );
+        }
+    };
+
+    // Handle stop, keep, release
+    switch (action){
+    case TeraIVAction::StopProgram:
+        env.log("Program stop requested...");
+        env.console.overlay().add_log("Request program stop", COLOR_WHITE);
+        send_keep_notification();
+        throw ProgramFinishedException();
+    case TeraIVAction::Keep:
+        env.log("Moving Pokemon to keep box...", COLOR_BLUE);
+        stats.m_kept++;
+        env.update_stats();
+        env.console.overlay().add_log("Keep pokemon: " + pokemon_slug, COLOR_YELLOW);
+        send_keep_notification();
+
+        if (move_pokemon_to_keep(env, context, party_row) == false){
+            env.log("No empty slot available to place new pokemon.");
+            env.console.overlay().add_log("No box space", COLOR_RED);
+            throw ProgramFinishedException();
+        }
+        break;
+    case TeraIVAction::Release:
+    default:
+        size_t local_errors = 0;
+        release_one_pokemon(env.program_info(), env.console, context, local_errors);
+        break;
+    }
+}
+
+bool TeraSelfFarmer::move_pokemon_to_keep(SingleSwitchProgramEnvironment& env, BotBaseContext& context, uint8_t pokemon_row_in_party){
+    SomethingInBoxSlotDetector sth_in_box_detector(COLOR_RED);
+
+    context.wait_for_all_requests();
+
+    for (uint8_t row = 0; row < 5; row++){
+        for (uint8_t col = 0; col < 6; col++){
+            move_box_cursor(env.program_info(), env.console, context, BoxCursorLocation::SLOTS, row, col);
+            context.wait_for_all_requests();
+            // If no pokemon in the slot:
+            if (!sth_in_box_detector.detect(env.console.video().snapshot())){
+                // Move the to-keep pokemon in party to the empty slot.
+                swap_two_box_slots(env.program_info(), env.console, context,
+                    BoxCursorLocation::PARTY, pokemon_row_in_party, 0,
+                    BoxCursorLocation::SLOTS, row, col);
+
+                context.wait_for_all_requests();
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 
@@ -420,9 +385,9 @@ void TeraSelfFarmer::program(SingleSwitchProgramEnvironment& env, BotBaseContext
     bool first = true;
 
     while (true){
-        if (m_number_caught >= STOP_CONDITIONS.MAX_CATCHES){
-            break;
-        }
+//        if (m_number_caught >= STOP_CONDITIONS.MAX_CATCHES){
+//            break;
+//        }
 
         env.update_stats();
         send_program_status_notification(env, NOTIFICATION_STATUS_UPDATE);
@@ -503,7 +468,7 @@ void TeraSelfFarmer::program(SingleSwitchProgramEnvironment& env, BotBaseContext
 
         pbf_press_dpad(context, DPAD_DOWN, 10, 10);
         pbf_mash_button(context, BUTTON_A, 250);
-        bool raid_won = run_raid(env, context);
+        bool raid_won = run_raid(env, context, best_silhouette, best_type);
         {
             std::stringstream ss;
             ss << "You ";

@@ -9,7 +9,7 @@ namespace PokemonSV {
 
 class PokemonSelectCell : public StringSelectCell{
 public:
-    PokemonSelectCell(const std::string& default_slug);
+    PokemonSelectCell(const std::string& default_slug, bool);
 };
 
 } // namespace PokemonSV

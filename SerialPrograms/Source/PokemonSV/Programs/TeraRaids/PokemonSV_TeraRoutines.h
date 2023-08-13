@@ -11,6 +11,7 @@
 #include <string>
 #include <atomic>
 #include "CommonFramework/Language.h"
+#include "PokemonSV/Options/PokemonSV_TeraIVFilterTable.h"
 //#include "CommonFramework/Tools/StatsTracking.h"
 
 namespace PokemonAutomation{
@@ -99,6 +100,24 @@ TeraResult exit_tera_win_by_catching(
     EventNotificationOption& notification_shiny,
     bool stop_on_shiny, size_t stop_on_sparkly_items,
     std::atomic<uint64_t>* stat_shinies
+);
+
+
+void finish_raid_win_by_catching(
+    ProgramEnvironment& env,
+    ConsoleHandle& console, BotBaseContext& context,
+    Language language,
+    const std::string& ball_slug,
+    size_t stop_on_sparkly_items
+);
+
+bool check_caught_pokemon_info(
+    ProgramEnvironment &env,
+    ConsoleHandle &console, BotBaseContext &context,
+    Language language,
+    TeraIVFilterTable &FILTERS,
+    const std::string &pokemon_slug,
+    TeraIVAction &action
 );
 
 

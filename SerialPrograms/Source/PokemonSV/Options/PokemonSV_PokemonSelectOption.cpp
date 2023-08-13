@@ -6,10 +6,11 @@ namespace NintendoSwitch {
 namespace PokemonSV {
 
 PokemonSelectCell::PokemonSelectCell(
-        const std::string& default_slug
+        const std::string& default_slug,
+        bool with_anything=false
 )
     : StringSelectCell(
-          ALL_POKEMON_TERA_NAMES(),
+          with_anything ? ALL_POKEMON_TERA_NAMES_WITH_ANYTHING() : ALL_POKEMON_TERA_NAMES(),
           LockWhileRunning::LOCKED,
           default_slug
     )
