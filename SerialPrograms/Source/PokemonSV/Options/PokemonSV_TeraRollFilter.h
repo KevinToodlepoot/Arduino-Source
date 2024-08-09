@@ -55,7 +55,7 @@ public:
         PASSED,
     };
 
-    FilterResult run_filter(
+    virtual FilterResult run_filter(
         const ProgramInfo& info, ConsoleHandle& console, BotBaseContext& context,
         TeraRaidData& data
     ) const;
@@ -86,6 +86,11 @@ public:
 class TeraRollFilterAdvanced : public TeraRollFilter{
 public:
     TeraRollFilterAdvanced(uint8_t default_max_stars, const std::string& default_slug);
+
+    FilterResult run_filter(
+        const ProgramInfo& info, ConsoleHandle& console, BotBaseContext& context,
+        TeraRaidData& data
+    ) const override;
 
     StringSelectCell SPECIES_FILTER;
 };

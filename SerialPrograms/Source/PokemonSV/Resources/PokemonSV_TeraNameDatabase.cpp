@@ -38,7 +38,7 @@ StringSelectDatabase make_ALL_POKEMON_TERA_NAMES(bool with_anything = false){
     const SpriteDatabase& sprites = ALL_POKEMON_SPRITES();
 
     std::vector<std::string> slugs;
-    for (std::string& slug : load_pokemon_slug_json_list("PokemonSV/Pokedex.json")){
+    for (std::string& slug : load_pokemon_slug_json_list("PokemonSV/PokemonSlugs.json")){
         const SpriteDatabase::Sprite* sprite = sprites.get_nothrow(slug);
         if (sprite != nullptr){
             slugs.emplace_back(std::move(slug));

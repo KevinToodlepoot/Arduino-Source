@@ -218,7 +218,23 @@ TeraRollFilterAdvanced::TeraRollFilterAdvanced(uint8_t default_max_stars, const 
     PA_ADD_OPTION(SPECIES_FILTER);
 }
 
+TeraRollFilter::FilterResult TeraRollFilterAdvanced::run_filter(const ProgramInfo &info, ConsoleHandle &console, BotBaseContext &context, TeraRaidData &data) const
+{
+    // Check if species is a match
+    FilterResult result = TeraRollFilter::run_filter(info, console, context, data);
 
+    if (result != FilterResult::PASSED){
+        return result;
+    }
+
+    if (SPECIES_FILTER.slug() != data.species || SPECIES_FILTER.slug() == "anything"){
+        console.log("Species filter mismatch. Skipping...");
+        close_raid(info, console, context);
+        return FilterResult::FAILED;
+    }
+
+    return FilterResult::PASSED;
+}
 }
 }
 }
