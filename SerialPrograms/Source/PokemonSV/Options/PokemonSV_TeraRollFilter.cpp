@@ -14,6 +14,7 @@
 #include "Pokemon/Pokemon_Strings.h"
 #include "PokemonSV/Inference/Tera/PokemonSV_TeraCardDetector.h"
 #include "PokemonSV/Programs/TeraRaids/PokemonSV_TeraRoutines.h"
+#include "PokemonSV/Resources/PokemonSV_TeraNameDatabase.h"
 #include "PokemonSV_TeraRollFilter.h"
 
 namespace PokemonAutomation{
@@ -210,6 +211,12 @@ bool TeraRollFilter::check_herba(const std::string& pokemon_slug) const{
 }
 
 
+TeraRollFilterAdvanced::TeraRollFilterAdvanced(uint8_t default_max_stars, const std::string& default_slug)
+    : TeraRollFilter (default_max_stars, false)
+    , SPECIES_FILTER (ALL_POKEMON_TERA_NAMES_WITH_ANYTHING(), LockMode::UNLOCK_WHILE_RUNNING, default_slug)
+{
+    PA_ADD_OPTION(SPECIES_FILTER);
+}
 
 
 }

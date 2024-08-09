@@ -11,6 +11,7 @@
 #include "Common/Cpp/Options/BooleanCheckBoxOption.h"
 #include "Common/Cpp/Options/SimpleIntegerOption.h"
 #include "Common/Cpp/Options/EnumDropdownOption.h"
+#include "CommonFramework/Options/StringSelectOption.h"
 
 namespace PokemonAutomation{
     class Logger;
@@ -79,6 +80,14 @@ public:
     SimpleIntegerOption<uint8_t> MAX_STARS;
 
     BooleanCheckBoxOption SKIP_NON_HERBA;
+};
+
+
+class TeraRollFilterAdvanced : public TeraRollFilter{
+public:
+    TeraRollFilterAdvanced(uint8_t default_max_stars, const std::string& default_slug);
+
+    StringSelectCell SPECIES_FILTER;
 };
 
 

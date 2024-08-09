@@ -42,6 +42,7 @@
 #include "Programs/TeraRaids/PokemonSV_AutoHost.h"
 #include "Programs/TeraRaids/PokemonSV_TeraRoller.h"
 #include "Programs/TeraRaids/PokemonSV_TeraSelfFarmer.h"
+#include "Programs/TeraRaids/PokemonSV_TeraSelfFarmerAdvanced.h"
 #include "Programs/TeraRaids/PokemonSV_TeraMultiFarmer.h"
 
 #include "Programs/FastCodeEntry/PokemonSV_FastCodeEntry.h"
@@ -118,6 +119,7 @@ std::vector<PanelEntry> PanelListFactory::make_panels() const{
     ret.emplace_back(make_single_switch_program<AutoHost_Descriptor, AutoHost>());
     ret.emplace_back(make_single_switch_program<TeraRoller_Descriptor, TeraRoller>());
     ret.emplace_back(make_single_switch_program<TeraSelfFarmer_Descriptor, TeraSelfFarmer>());
+    ret.emplace_back(make_single_switch_program<TeraSelfFarmerAdvanced_Descriptor, TeraSelfFarmerAdvanced>());
     ret.emplace_back(make_multi_switch_program<TeraMultiFarmer_Descriptor, TeraMultiFarmer>());
 
     ret.emplace_back("---- Fast Code Entry ----");

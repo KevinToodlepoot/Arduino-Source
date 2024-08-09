@@ -1548,6 +1548,8 @@ file(GLOB MAIN_SOURCES
     Source/PokemonSV/Programs/TeraRaids/PokemonSV_TeraRoutines.h
     Source/PokemonSV/Programs/TeraRaids/PokemonSV_TeraSelfFarmer.cpp
     Source/PokemonSV/Programs/TeraRaids/PokemonSV_TeraSelfFarmer.h
+    Source/PokemonSV/Programs/TeraRaids/PokemonSV_TeraSelfFarmerAdvanced.cpp
+    Source/PokemonSV/Programs/TeraRaids/PokemonSV_TeraSelfFarmerAdvanced.h
     Source/PokemonSV/Programs/TestPrograms/PokemonSV_SoundListener.cpp
     Source/PokemonSV/Programs/TestPrograms/PokemonSV_SoundListener.h
     Source/PokemonSV/Programs/Trading/PokemonSV_SelfBoxTrade.cpp
@@ -1565,6 +1567,8 @@ file(GLOB MAIN_SOURCES
     Source/PokemonSV/Resources/PokemonSV_NameDatabase.h
     Source/PokemonSV/Resources/PokemonSV_PokemonSprites.cpp
     Source/PokemonSV/Resources/PokemonSV_PokemonSprites.h
+    Source/PokemonSV/Resources/PokemonSV_TeraNameDatabase.cpp
+    Source/PokemonSV/Resources/PokemonSV_TeraNameDatabase.h
     Source/PokemonSV/Resources/PokemonSV_TournamentPrizeNames.cpp
     Source/PokemonSV/Resources/PokemonSV_TournamentPrizeNames.h
     Source/PokemonSwSh/Commands/PokemonSwSh_Commands_AutoHosts.cpp
